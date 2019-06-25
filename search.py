@@ -83,21 +83,19 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
     hints = ALL_HINTS[move][valid]
 
     # choose among the unique hints
-    unique_hints, inverse = np.unique(hints, return_inverse=True)
+    _, inverse, counts = np.unique(hints, return_inverse=True, return_counts=True)
 
     max_hint_cost = -1
     # re-use a single array for efficiency
     new_valid = np.zeros(len(SOLUTIONS), dtype=bool)
-    for h in range(len(unique_hints)):
-
-      # the new valid moves are the ones that would have produced this hint
-      new_valid[:] = 0
-      new_valid[valid] = (inverse == h)
-
-      if np.sum(new_valid) == 1:
+    for h, count in enumerate(counts):
+      if count == 1:
         # only a single solution; we will win on the next round by guessing it
         hint_cost = depth + 1
       else:
+        # the new valid moves are the ones that would have produced this hint
+        new_valid[:] = 0
+        new_valid[valid] = (inverse == h)
         hint_cost, _ = search(new_valid, depth + 1)
 
       max_hint_cost = max(hint_cost, max_hint_cost)
