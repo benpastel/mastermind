@@ -88,20 +88,20 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
   best_move = None
   for move in np.nonzero(valid)[0]:
 
-    # find the hint for each (guess, solution) pair and write to hints array
-    hints = ALL_HINTS[move].copy()
-    hints[~valid] = 255 # wipe the hints at solutions that are already invalid
+    # find the possible hints from valid solutions after this guess
+    hints = ALL_HINTS[move][valid]
 
     # choose among the unique, valid hints
     unique_hints, inverse = np.unique(hints, return_inverse=True)
 
     max_hint_cost = -1
+    # re-use a single array for efficiency
+    new_valid = np.zeros(len(SOLUTIONS), dtype=bool)
     for h, hint in enumerate(unique_hints):
-      if hint == 255:
-        continue
 
       # the new valid moves are the ones that would have produced this hint
-      new_valid = (inverse == h)
+      new_valid[:] = 0
+      new_valid[valid] = (inverse == h)
       hint_cost, _ = search(new_valid, depth + 1)
       max_hint_cost = max(hint_cost, max_hint_cost)
 
