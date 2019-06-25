@@ -1,3 +1,4 @@
+# python 3.6
 from typing import List, Tuple
 from time import time
 
@@ -7,7 +8,7 @@ COLORS = [
   'Red',
   'Blue',
   'Green',
-  'Purple',
+  # 'Purple',
 ]
 
 def all_combos(num_colors: int) -> np.ndarray:
@@ -89,22 +90,20 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
 
     # find the hint for each (guess, solution) pair and write to hints array
     hints = ALL_HINTS[move].copy()
-    hints[~valid] = -1 # wipe the hints at solutions that are already invalid
+    hints[~valid] = 255 # wipe the hints at solutions that are already invalid
 
     # choose among the unique, valid hints
     unique_hints, inverse = np.unique(hints, return_inverse=True)
 
     max_hint_cost = -1
     for h, hint in enumerate(unique_hints):
-      if hint == -1:
+      if hint == 255:
         continue
 
       # the new valid moves are the ones that would have produced this hint
       new_valid = (inverse == h)
-
-      if np.sum(new_valid) < valid_count:
-        hint_cost, _ = search(new_valid, depth + 1)
-        max_hint_cost = max(hint_cost, max_hint_cost)
+      hint_cost, _ = search(new_valid, depth + 1)
+      max_hint_cost = max(hint_cost, max_hint_cost)
 
     if max_hint_cost < min_move_cost:
       best_move = move
@@ -113,11 +112,20 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
   assert best_move is not None
   return min_move_cost, best_move
 
-start = time()
+# import cProfile, pstats, io
+# pr = cProfile.Profile()
+# pr.enable()
 
+start = time()
 all_valid = np.ones(len(SOLUTIONS), dtype=bool)
 cost, move = search(all_valid, 0)
 print(f"found a solution in {cost} moves, with first move:")
 print(np.array(COLORS)[SOLUTIONS[move]])
-
 print(f" in {time() - start:.1f} seconds")
+
+# pr.disable()
+# s = io.StringIO()
+# sortby = 'cumulative'
+# ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+# ps.print_stats()
+# print(s.getvalue())
