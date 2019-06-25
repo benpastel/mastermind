@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from time import time
 
 import numpy as np
 
@@ -13,7 +14,7 @@ import numpy as np
 COLORS = [
   'Red',
   'Blue',
-  # 'Green',
+  'Green',
   # 'Purple',
   'Black'
 ]
@@ -71,7 +72,7 @@ def find_hints(guess):
   return black_counts * 10 + white_counts
 
 
-def search(valid: np.ndarray, moves: List[int], depth: int) -> Tuple:
+def search(valid: np.ndarray, depth: int) -> Tuple:
   """
   the cost is the max number of moves to force a win; i.e. the final depth
 
@@ -80,7 +81,7 @@ def search(valid: np.ndarray, moves: List[int], depth: int) -> Tuple:
   the demon tries to maximize cost by choosing hints for the guesses that are consistent
   with one of the remaining valid solutions
 
-  returns: (best cost, list of moves that achieves that cost)
+  returns: (best cost, move that achieves that cost)
   """
   assert depth < 10
 
@@ -89,14 +90,13 @@ def search(valid: np.ndarray, moves: List[int], depth: int) -> Tuple:
   if valid_count == 1:
     # there's only one remaining solution; we win by guessing it
     move = np.nonzero(valid)[0][0]
-    return depth + 1, moves + [move]
-
-  print(f"{valid_count}, {moves}, {depth}")
+    return depth + 1, move
 
   min_move_cost = 100
-  best_move_path = None
-  for move, guess in enumerate(GUESSES):
-    new_moves = moves + [move]
+  best_move = None
+  for move, guess in enumerate(SOLUTIONS):
+    if not valid[move]:
+      continue
 
     # find the hint for each (guess, solution) pair and write to hints array
     hints = find_hints(guess)
@@ -106,7 +106,6 @@ def search(valid: np.ndarray, moves: List[int], depth: int) -> Tuple:
     unique_hints, inverse = np.unique(hints, return_inverse=True)
 
     max_hint_cost = -1
-    worst_hint_path = None
     for h, hint in enumerate(unique_hints):
       if hint == -1:
         continue
@@ -115,21 +114,21 @@ def search(valid: np.ndarray, moves: List[int], depth: int) -> Tuple:
       new_valid = (inverse == h)
 
       if np.sum(new_valid) < valid_count:
-        hint_cost, path = search(new_valid, new_moves, depth + 1)
-      else:
-        hint_cost = 999
-        path = None
-
-      if hint_cost > max_hint_cost:
-        worst_hint_path = path
-        max_hint_cost = hint_cost
+        hint_cost, _ = search(new_valid, depth + 1)
+        max_hint_cost = max(hint_cost, max_hint_cost)
 
     if max_hint_cost < min_move_cost:
-      best_move_path = worst_hint_path
+      best_move = move
       min_move_cost = max_hint_cost
 
-  assert best_move_path is not None
-  return min_move_cost, best_move_path
+  assert best_move is not None
+  return min_move_cost, best_move
+
+start = time()
 
 all_valid = np.ones(len(SOLUTIONS), dtype=bool)
-print(search(all_valid, [], 0))
+cost, move = search(all_valid, 0)
+print(f"found a solution in {cost} moves, with first move:")
+print(np.array(COLORS)[GUESSES[move]])
+
+print(f" in {time() - start:.1f} seconds")
