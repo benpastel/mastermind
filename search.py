@@ -89,6 +89,11 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
     # re-use a single array for efficiency
     new_valid = np.zeros(len(SOLUTIONS), dtype=bool)
     for h, count in enumerate(counts):
+      if max_hint_cost >= min_move_cost:
+        # this is already equal or worse to a move we already searched
+        # so stop searching
+        continue
+
       if count == 1:
         # only a single solution; we will win on the next round by guessing it
         hint_cost = depth + 2
