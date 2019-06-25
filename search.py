@@ -8,7 +8,7 @@ COLORS = [
   'Red',
   'Blue',
   'Green',
-  # 'Purple',
+  'Purple',
 ]
 
 def all_combos(num_colors: int) -> np.ndarray:
@@ -34,6 +34,8 @@ SOLUTIONS = all_combos(len(COLORS))
 def find_hints(guess):
   # find hints (black & white pegs) for all solutions given a single guess
   # return black & white peg counts encoded as a single number
+  #
+  # this function is not optimized because hints are precalculated quickly
 
   # tile guess to the same size as solutions
   guesses = np.zeros_like(SOLUTIONS)
@@ -57,12 +59,10 @@ def find_hints(guess):
 
   return black_counts * 10 + white_counts
 
-start = time()
-print(f"precalculating all hints for all {len(SOLUTIONS) ** 2} pairs of guesses and solutions...")
+# precalculate hints for all pairs of guesses and solutions
 ALL_HINTS = np.zeros((len(SOLUTIONS), len(SOLUTIONS)), dtype=np.uint8)
 for g, guess in enumerate(SOLUTIONS):
   ALL_HINTS[g] = find_hints(guess)
-print(f"done in {time() - start:.1f} seconds.")
 
 def search(valid: np.ndarray, depth: int) -> Tuple:
   """
@@ -107,20 +107,9 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
   assert best_move is not None
   return min_move_cost, best_move
 
-# import cProfile, pstats, io
-# pr = cProfile.Profile()
-# pr.enable()
-
 start = time()
 all_valid = np.ones(len(SOLUTIONS), dtype=bool)
 cost, move = search(all_valid, 0)
 print(f"found a solution in {cost} moves, with first move:")
 print(np.array(COLORS)[SOLUTIONS[move]])
 print(f" in {time() - start:.1f} seconds")
-
-# pr.disable()
-# s = io.StringIO()
-# sortby = 'cumulative'
-# ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-# ps.print_stats()
-# print(s.getvalue())
