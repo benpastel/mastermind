@@ -58,7 +58,7 @@ def find_hints(guess):
   return black_counts * 10 + white_counts
 
 start = time()
-print(f"precalculating all {len(SOLUTIONS) ** 2} hints...")
+print(f"precalculating all hints for all {len(SOLUTIONS) ** 2} pairs of guesses and solutions...")
 ALL_HINTS = np.zeros((len(SOLUTIONS), len(SOLUTIONS)), dtype=np.uint8)
 for g, guess in enumerate(SOLUTIONS):
   ALL_HINTS[g] = find_hints(guess)
@@ -75,15 +75,6 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
 
   returns: (best cost, move that achieves that cost)
   """
-  assert depth < 10
-
-  valid_count = np.sum(valid)
-  assert valid_count > 0
-  if valid_count == 1:
-    # there's only one remaining solution; we win by guessing it
-    move = np.nonzero(valid)[0][0]
-    return depth + 1, move
-
   min_move_cost = 100
   best_move = None
   for move in np.nonzero(valid)[0]:
@@ -91,18 +82,24 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
     # find the possible hints from valid solutions after this guess
     hints = ALL_HINTS[move][valid]
 
-    # choose among the unique, valid hints
+    # choose among the unique hints
     unique_hints, inverse = np.unique(hints, return_inverse=True)
 
     max_hint_cost = -1
     # re-use a single array for efficiency
     new_valid = np.zeros(len(SOLUTIONS), dtype=bool)
-    for h, hint in enumerate(unique_hints):
+    for h in range(len(unique_hints)):
 
       # the new valid moves are the ones that would have produced this hint
       new_valid[:] = 0
       new_valid[valid] = (inverse == h)
-      hint_cost, _ = search(new_valid, depth + 1)
+
+      if np.sum(new_valid) == 1:
+        # only a single solution; we will win on the next round by guessing it
+        hint_cost = depth + 1
+      else:
+        hint_cost, _ = search(new_valid, depth + 1)
+
       max_hint_cost = max(hint_cost, max_hint_cost)
 
     if max_hint_cost < min_move_cost:
