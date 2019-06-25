@@ -8,7 +8,7 @@ COLORS = [
   'Red',
   'Blue',
   'Green',
-  'Purple',
+  # 'Purple',
 ]
 
 def all_combos(num_colors: int) -> np.ndarray:
@@ -91,7 +91,7 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
     for h, count in enumerate(counts):
       if count == 1:
         # only a single solution; we will win on the next round by guessing it
-        hint_cost = depth + 1
+        hint_cost = depth + 2
       else:
         # the new valid moves are the ones that would have produced this hint
         new_valid[:] = 0
