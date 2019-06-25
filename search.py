@@ -3,20 +3,11 @@ from time import time
 
 import numpy as np
 
-# The actual Air Canada game had 6 colors, but only actually uses 4 of them
-# in the solutions for some reason (a bug?).
-#
-# One of the results I'm most interested in is whether it's every optimal to guess
-# the unused colors.  So I added a single color, Black, that's allowed in guesses
-# but not in the solution.
-#
-# Start with two active colors for now & add the rest later.
 COLORS = [
   'Red',
   'Blue',
   'Green',
-  # 'Purple',
-  'Black'
+  'Purple',
 ]
 
 def all_combos(num_colors: int) -> np.ndarray:
@@ -37,17 +28,11 @@ def all_combos(num_colors: int) -> np.ndarray:
   assert i == num_colors ** 4
   return combos
 
-# include Black for guessing
-GUESSES = all_combos(len(COLORS))
-
-# exclude Black for solutions
-# note that indices into SOLUTIONS are valid indices into
-# the corresponding GUESSES, but not vice-versa
-SOLUTIONS = all_combos(len(COLORS) - 1)
+SOLUTIONS = all_combos(len(COLORS))
 
 def find_hints(guess):
-  # TODO pre-calc
-  # not too optimized since we are going to pre-calc anyway
+  # find hints (black & white pegs) for all solutions given a single guess
+  # return black & white peg counts encoded as a single number
 
   # tile guess to the same size as solutions
   guesses = np.zeros_like(SOLUTIONS)
@@ -71,6 +56,12 @@ def find_hints(guess):
 
   return black_counts * 10 + white_counts
 
+start = time()
+print(f"precalculating all {len(SOLUTIONS) ** 2} hints...")
+ALL_HINTS = np.zeros((len(SOLUTIONS), len(SOLUTIONS)), dtype=np.uint8)
+for g, guess in enumerate(SOLUTIONS):
+  ALL_HINTS[g] = find_hints(guess)
+print(f"done in {time() - start:.1f} seconds.")
 
 def search(valid: np.ndarray, depth: int) -> Tuple:
   """
@@ -94,12 +85,10 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
 
   min_move_cost = 100
   best_move = None
-  for move, guess in enumerate(SOLUTIONS):
-    if not valid[move]:
-      continue
+  for move in np.nonzero(valid)[0]:
 
     # find the hint for each (guess, solution) pair and write to hints array
-    hints = find_hints(guess)
+    hints = ALL_HINTS[move].copy()
     hints[~valid] = -1 # wipe the hints at solutions that are already invalid
 
     # choose among the unique, valid hints
@@ -129,6 +118,6 @@ start = time()
 all_valid = np.ones(len(SOLUTIONS), dtype=bool)
 cost, move = search(all_valid, 0)
 print(f"found a solution in {cost} moves, with first move:")
-print(np.array(COLORS)[GUESSES[move]])
+print(np.array(COLORS)[SOLUTIONS[move]])
 
 print(f" in {time() - start:.1f} seconds")
