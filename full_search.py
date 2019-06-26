@@ -51,7 +51,10 @@ def full_search(
 
   returns: (best cost, move that achieves that cost)
   """
-  assert depth < 5
+  # TODO shortcut this before the recursive call
+  if depth >= abort_above_cost:
+    return depth, None
+
   valid_count = np.sum(valid)
 
   # restricted search already found solutions that cost 5
@@ -82,9 +85,6 @@ def full_search(
       # so stop searching
       continue
 
-    if depth == 0:
-      print(f"{format_move(move)} (est. score: {guess_scores[move]})")
-
     hints = ALL_HINTS[move][valid]
 
     # choose among the unique hints
@@ -101,9 +101,6 @@ def full_search(
         # this is already equal or worse to a move we already searched
         # so stop searching
         continue
-
-      if depth == 0:
-        print(f"checking {format_hint(hints[h])} / {counts[h]}")
 
       if hints[h] == WIN:
         # TODO: I don't think we need this case anymore?
