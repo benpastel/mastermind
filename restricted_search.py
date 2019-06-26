@@ -47,14 +47,6 @@ def search_restricted(valid: np.ndarray, depth: int) -> Tuple:
     # choose among the unique hints
     uniques, inverse, counts = np.unique(hints, return_inverse=True, return_counts=True)
 
-    if len(uniques) == 1:
-      # all valid solutions give us the same hint
-      # that means this guess gave us 0 new information
-      print(format_move(move))
-      print(format_hint(hints[0]))
-      print(uniques)
-      assert False
-
     max_hint_cost = -1
     # re-use a single array for efficiency
     new_valid = np.zeros(len(SOLUTIONS), dtype=bool)
