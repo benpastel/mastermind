@@ -31,7 +31,6 @@ def all_combos(num_colors: int) -> np.ndarray:
 
 SOLUTIONS = all_combos(len(COLORS))
 
-WIN = 40 # hints encoded as 10 * black_count + white_counts
 def find_hints(guess):
   # find hints (black & white pegs) for all solutions given a single guess
   # return black & white peg counts encoded as a single number
@@ -60,18 +59,19 @@ def find_hints(guess):
 
   return 10 * black_counts + white_counts
 
+WIN = 40 # see encoding above
+def format_hint(hint):
+  white = hint % 10
+  black = int((hint - white) / 10)
+  return f"(black: {black}, white: {white})"
+
 # precalculate hints for all pairs of guesses and solutions
 ALL_HINTS = np.zeros((len(SOLUTIONS), len(SOLUTIONS)), dtype=np.uint8)
 for g, guess in enumerate(SOLUTIONS):
   ALL_HINTS[g] = find_hints(guess)
 
 def format_move(move):
-  return np.array(COLORS)[SOLUTIONS[move]]
-
-def format_hint(hint):
-  white = hint % 10
-  black = int((hint - white) / 10)
-  return f"(black: {black}, white: {white})"
+  return np.array(COLORS)[SOLUTIONS[move]] if move is not None else None
 
 def search(valid: np.ndarray, depth: int) -> Tuple:
   """
@@ -90,9 +90,8 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
     # find the possible hints from valid solutions after this guess
     hints = ALL_HINTS[move][valid]
 
-    # ugly printing hack, since I've already learned move 0 wins in the 4-color case
-    if depth == 0 and move == 0:
-      print(f"  {format_move(move)}:")
+    # for printing out parts of the game tree
+    logs = []
 
     # choose among the unique hints
     uniques, inverse, counts = np.unique(hints, return_inverse=True, return_counts=True)
@@ -105,26 +104,33 @@ def search(valid: np.ndarray, depth: int) -> Tuple:
         # this is already equal or worse to a move we already searched
         # so stop searching
         continue
+      elif hint == WIN:
+        hint_cost = depth + 1
+        next_move = None
       elif counts[h] == 1:
         # only a single solution; we will win on the next round by guessing it
         hint_cost = depth + 2
-        next_move = SOLUTIONS[valid][inverse == h][0]
+        next_move = np.arange(len(SOLUTIONS))[valid][inverse == h][0]
+        assert len(np.arange(len(SOLUTIONS))[valid][inverse == h]) == 1
+
       else:
         # the new valid moves are the ones that would have produced this hint
         new_valid[:] = 0
         new_valid[valid] = (inverse == h)
         hint_cost, next_move = search(new_valid, depth + 1)
 
-      # ugly printing hack, since I've already learned move 0 wins in the 4-color case
-      if depth == 0 and move == 0 and hint != WIN:
-        print(f"     {format_hint(uniques[h])} => {format_move(next_move)}")
+      if depth == 0:
+        logs.append(f"     {format_hint(uniques[h])} => {format_move(next_move)} (win in {hint_cost})")
 
       max_hint_cost = max(hint_cost, max_hint_cost)
+
+    if depth == 0:
+      print(f"  {format_move(move)} (win in {max_hint_cost}):")
+      print('\n'.join(logs))
 
     if max_hint_cost < min_move_cost:
       best_move = move
       min_move_cost = max_hint_cost
-
 
   assert best_move is not None
   return min_move_cost, best_move
