@@ -7,7 +7,7 @@ If you limit your guesses to solutions that are consistent with the guesses so f
 
 But if you allow any guess - and in particular, allow using the colors never-in-a-solution colors - you can force a win in 4!
 
-Here's the full game tree:
+I only printed one solution here - all the other solutions are symmetric to this one.  Here's the full game tree:
 ```
 python3 fixed_search.py
 ```
