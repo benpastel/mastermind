@@ -78,7 +78,6 @@ def full_search(
       # all the solutions had the same hint
       # so guesses from here on give us literally 0 information
       # and we can safely ignore them
-      # print(f"{'    ' * depth}abort depth")
       break
 
     if guess_scores[move] == 1:
@@ -89,7 +88,6 @@ def full_search(
     if min_move_cost <= abort_below_cost:
       # the demon can already force an equally bad branch
       # so stop searching
-      # print(f"{'    ' * depth}abort below")
       return min_move_cost, None
 
     hints = ALL_HINTS[move][valid]
@@ -109,19 +107,14 @@ def full_search(
         # so stop searching
         continue
 
-      # if depth <= 0:
-      # print(f"{'    ' * depth}checking {format_hint(hints[h])} / {counts[h]}")
-
       if hints[h] == WIN:
         # TODO: I don't think we need this case anymore?
         hint_cost = depth + 1
         next_move = None
-        # print(f"{'    ' * depth}win")
       elif counts[h] == 1:
         # only a single solution; we will win on the next round by guessing it
         hint_cost = depth + 2
         next_move = None # TODO update properly
-        # print(f"{'    ' * depth}single")
       else:
         # the new valid moves are the ones that would have produced this hint
         new_valid[:] = 0
@@ -134,9 +127,6 @@ def full_search(
       best_move = move
       min_move_cost = max_hint_cost
       abort_above_cost = min(min_move_cost, abort_above_cost)
-
-    # if depth <= 0:
-    # print(f"{'    ' * depth} {format_move(move)} => cost {max_hint_cost}")
 
   return min_move_cost, best_move
 
